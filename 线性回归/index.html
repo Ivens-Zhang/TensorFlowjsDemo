@@ -27,13 +27,41 @@
                 xAxisDomain: [0, 15],
                 yAxisDomain: [0, 30]
             })
+            model = tf.sequential()
+            model.add(tf.layers.dense({
+                units: 1,
+                inputShape: [1]
+            }))
+            model.compile({
+                loss: tf.losses.meanSquaredError,
+                optimizer: tf.train.sgd(0.01)
+            })
+
+            const inputs = tf.tensor(xs)
+            const labels = tf.tensor(ys)
+            await model.fit(inputs, labels, {
+                batchSize: 6,
+                epochs: 400,
+                callbacks: tfvis.show.fitCallbacks({
+                    name: '训练过程'
+                }, ['loss'])
+            })
         }
 
         document.addEventListener('DOMContentLoaded', buildModel);
+
+        async function inputPredictNumber() {
+            const numString = document.getElementById('numberPredict').value
+            let num = Number(numString)
+            let res = model.predict(tf.tensor([num])).dataSync()[0]
+            alert(res)
+        }
     </script>
 </head>
 
 <body>
+    <input id="numberPredict">
+    <button onclick="inputPredictNumber()">点我</button>
 </body>
 
 </html>
