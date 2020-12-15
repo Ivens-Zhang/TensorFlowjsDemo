@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- Import TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    <!-- Import tfjs-vis -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.0.2/dist/tfjs-vis.umd.min.js"></script>
+
+    <script>
+        let model
+        async function buildModel() {
+            const xs = [1, 2, 3, 4, 5, 6, 7, 8]
+            const ys = [1, 3, 5, 7, 9, 11, 13, 15]
+
+            tfvis.render.scatterplot({
+                name: '散点图'
+            }, {
+                values: xs.map((x, i) => ({
+                    x,
+                    y: ys[i]
+                }))
+            }, {
+                xAxisDomain: [0, 15],
+                yAxisDomain: [0, 30]
+            })
+        }
+
+        document.addEventListener('DOMContentLoaded', buildModel);
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>
