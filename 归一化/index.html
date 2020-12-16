@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>线性回归</title>
+    <title>归一化</title>
     <!-- Import TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
     <!-- Import tfjs-vis -->
@@ -16,24 +16,35 @@
          * reference these document：
          *      - https://js.tensorflow.org/api/latest/
          *      - https://js.tensorflow.org/api_vis/latest/?hl=zh_cn
+         * 
+         * P.S. 同目录下的 t1s.xml 文件中存有 1000 条真实的身高与体重的数据，参考链接：
+         *      - http://wiki.stat.ucla.edu/socr/index.php/SOCR_Data_Dinov_020108_HeightsWeights
          **/
 
         let model
+        let xmlDoc
         async function buildModel() {
-            const xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-            const ys = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23]
+            const heights = [65, 71, 69, 68, 67, 68, 69, 70, 67, 66, 66, 67, 68, 67, 68]
+            const weights = [112, 136, 153, 142, 144, 123, 141, 136, 112, 120, 127, 114, 125, 122, 116]
 
             tfvis.render.scatterplot({
-                name: '散点图'
+                name: '身高体重训练数据'
             }, {
-                values: xs.map((x, i) => ({
+                values: heights.map((x, i) => ({
                     x,
-                    y: ys[i]
+                    y: weights[i]
                 }))
             }, {
-                xAxisDomain: [0, 15],
-                yAxisDomain: [0, 30]
+                xAxisDomain: [62, 73],
+                yAxisDomain: [100, 150]
             })
+
+            // 归一化
+            //      减去最小值，除数组宽度
+            const inputs = tf.tensor(heights).sub(65).div(6)
+            inputs.print()
+            const labels = tf.tensor(weights).sub(112).div(41)
+            labels.print()
 
             // 创建模型
             model = tf.sequential()
@@ -45,15 +56,13 @@
             // 选择损失函数、优化器
             model.compile({
                 loss: tf.losses.meanSquaredError,
-                optimizer: tf.train.sgd(0.005)
+                optimizer: tf.train.sgd(0.01)
             })
 
-            const inputs = tf.tensor(xs)
-            const labels = tf.tensor(ys)
             // 开始训练
             await model.fit(inputs, labels, {
-                batchSize: 4,
-                epochs: 200,
+                batchSize: 7,
+                epochs: 50,
                 callbacks: tfvis.show.fitCallbacks({
                     name: '训练过程'
                 }, ['loss'])
@@ -65,17 +74,21 @@
         async function inputPredictNumber() {
             const numString = document.getElementById('numberPredict').value
             let num = Number(numString)
-            // 进行预测，alert 结果的四舍五入取整
-            let res = model.predict(tf.tensor([num])).dataSync()[0]
+
+            // 进行预测，把输入的数按照上面同样进行归一化
+            let output = model.predict(tf.tensor([num]).sub(65).div(6))
+            // 将输出结果做反归一化处理
+            let res = output.mul(41).add(112).dataSync()[0]
             console.log(res);
-            alert(res.toFixed())
+            // 结果的四舍五入取整
+            alert(res.toFixed() + ' 磅')
         }
     </script>
 </head>
 
 <body>
-    <h3>公式：f(x) = 2x - 1</h3>
-    <strong>x: </strong><input id="numberPredict">
+    <h3>输入身高预测体重</h3>
+    <strong>身高（英尺）: </strong><input id="numberPredict">
     <button onclick="inputPredictNumber()">点我</button>
 </body>
 
