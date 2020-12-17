@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>逻辑回归</title>
+    <!-- Import TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    <!-- Import tfjs-vis -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.0.2/dist/tfjs-vis.umd.min.js"></script>
+
+    <script>
+        /**
+         * First of all
+         * reference these document：
+         *      - https://js.tensorflow.org/api/latest/
+         *      - https://js.tensorflow.org/api_vis/latest/?hl=zh_cn
+         * 
+         **/
+
+        let model
+        async function buildModel() {
+            let data = await getData(400)
+            console.log(data);
+
+            tfvis.render.scatterplot({
+                name: '逻辑回归训练数据'
+            }, {
+                values: [
+                    data.filter(p => p.label === 1),
+                    data.filter(p => p.label === 0)
+                ]
+            }, {
+                xAxisDomain: [-6, 6],
+                yAxisDomain: [-6, 6]
+            })
+
+            // 创建模型
+            model = tf.sequential()
+            model.add(tf.layers.dense({
+                units: 1,
+                inputShape: [2],
+                activation: 'sigmoid'
+            }))
+
+            // 选择损失函数、优化器
+            model.compile({
+                loss: tf.losses.logLoss,
+                optimizer: tf.train.adam(0.03)
+            })
+
+            const inputs = tf.tensor(data.map(p => [p.x, p.y]))
+            const labels = tf.tensor(data.map(p => p.label))
+
+            // 开始训练
+            await model.fit(inputs, labels, {
+                batchSize: 40,
+                epochs: 200,
+                callbacks: tfvis.show.fitCallbacks({
+                    name: '训练过程'
+                }, ['loss'])
+            })
+        }
+
+        /**
+        * Samples from a normal distribution. Uses the seedrandom library as the
+        * random generator.
+        *
+        * @param mean The mean. Default is 0.
+        * @param variance The variance. Default is 1.
+        */
+        function normalRandom(mean = 0, variance = 1) {
+            let v1, v2, s;
+            do {
+                v1 = 2 * Math.random() - 1;
+                v2 = 2 * Math.random() - 1;
+                s = v1 * v1 + v2 * v2;
+            } while (s > 1);
+
+            let result = Math.sqrt(-2 * Math.log(s) / s) * v1;
+            return mean + Math.sqrt(variance) * result;
+        }
+
+        async function getData(numSamples) {
+            let points = [];
+
+            function genGauss(cx, cy, label) {
+                for (let i = 0; i < numSamples / 2; i++) {
+                    let x = normalRandom(cx);
+                    let y = normalRandom(cy);
+                    points.push({ x, y, label });
+                }
+            }
+
+            genGauss(2, 2, 1);
+            genGauss(-2, -2, 0);
+            return points;
+        }
+
+        async function inputPredictNumber() {
+            const numStringX = document.getElementById('numberPredictX').value
+            const numStringY = document.getElementById('numberPredictY').value
+            let numX = Number(numStringX)
+            let numY = Number(numStringY)
+
+            // 进行预测，把输入的数按照上面同样进行归一化
+            let output = model.predict(tf.tensor([[numX, numY]]))
+            // 将输出结果做反归一化处理
+            let res = output.dataSync()[0]
+            // 结果的四舍五入取整
+            alert(res)
+        }
+
+
+        document.addEventListener('DOMContentLoaded', buildModel);
+    </script>
+</head>
+
+<body>
+    <h3>输入 x、y</h3>
+    <strong>x: </strong><input id="numberPredictX"><br>
+    <strong>y: </strong><input id="numberPredictY">
+    <button onclick="inputPredictNumber()">点我</button>
+</body>
+
+</html>
