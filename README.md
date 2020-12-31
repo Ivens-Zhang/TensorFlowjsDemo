@@ -8,3 +8,7 @@ imooc TensorFlow.js 学习笔记
 [**归一化**](http://blog.ivens-zhang.top/TensorFlowjsDemo/%E5%BD%92%E4%B8%80%E5%8C%96/index.html)
 
 ![](https://gitee.com/zhangyi98/pictureBed/raw/master//img/20201217093251.png)
+
+[**XoR 问题**](http://blog.ivens-zhang.top/TensorFlowjsDemo/xor/index.html)
+
+![](https://gitee.com/zhangyi98/pictureBed/raw/master//img/20201231172219.png)

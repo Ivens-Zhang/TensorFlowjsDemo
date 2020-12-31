@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>逻辑回归</title>
+    <title>XoR 问题</title>
     <!-- Import TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
     <!-- Import tfjs-vis -->
@@ -17,15 +17,16 @@
          *      - https://js.tensorflow.org/api/latest/
          *      - https://js.tensorflow.org/api_vis/latest/?hl=zh_cn
          * 
+         * P.S. 同目录下的 t1s.xml 文件中存有 1000 条真实的身高与体重的数据，参考链接：
+         *      - http://wiki.stat.ucla.edu/socr/index.php/SOCR_Data_Dinov_020108_HeightsWeights
          **/
 
         let model
         async function buildModel() {
-            let data = await getData(400)
-            console.log(data);
+            const data = getData(400)
 
             tfvis.render.scatterplot({
-                name: '逻辑回归训练数据'
+                name: 'XoR 训练'
             }, {
                 values: [
                     data.filter(p => p.label === 1),
@@ -39,37 +40,58 @@
             // 创建模型
             model = tf.sequential()
             model.add(tf.layers.dense({
-                units: 1,
+                units: 4,
                 inputShape: [2],
+                activation: 'relu'
+            }))
+            model.add(tf.layers.dense({
+                units: 1,
                 activation: 'sigmoid'
             }))
 
             // 选择损失函数、优化器
             model.compile({
                 loss: tf.losses.logLoss,
-                optimizer: tf.train.adam(0.03)
+                optimizer: tf.train.adam(0.1)
             })
 
             const inputs = tf.tensor(data.map(p => [p.x, p.y]))
             const labels = tf.tensor(data.map(p => p.label))
-
             // 开始训练
             await model.fit(inputs, labels, {
-                batchSize: 40,
-                epochs: 200,
+                // batchSize: 3,
+                epochs: 50,
                 callbacks: tfvis.show.fitCallbacks({
                     name: '训练过程'
                 }, ['loss'])
             })
         }
 
+        function getData(numSamples) {
+            let points = [];
+
+            function genGauss(cx, cy, label) {
+                for (let i = 0; i < numSamples / 2; i++) {
+                    let x = normalRandom(cx);
+                    let y = normalRandom(cy);
+                    points.push({ x, y, label });
+                }
+            }
+
+            genGauss(2, 2, 0);
+            genGauss(-2, -2, 0);
+            genGauss(-2, 2, 1);
+            genGauss(2, -2, 1);
+            return points;
+        }
+
         /**
-        * Samples from a normal distribution. Uses the seedrandom library as the
-        * random generator.
-        *
-        * @param mean The mean. Default is 0.
-        * @param variance The variance. Default is 1.
-        */
+         * Samples from a normal distribution. Uses the seedrandom library as the
+         * random generator.
+         *
+         * @param mean The mean. Default is 0.
+         * @param variance The variance. Default is 1.
+         */
         function normalRandom(mean = 0, variance = 1) {
             let v1, v2, s;
             do {
@@ -82,45 +104,30 @@
             return mean + Math.sqrt(variance) * result;
         }
 
-        async function getData(numSamples) {
-            let points = [];
-
-            function genGauss(cx, cy, label) {
-                for (let i = 0; i < numSamples / 2; i++) {
-                    let x = normalRandom(cx);
-                    let y = normalRandom(cy);
-                    points.push({ x, y, label });
-                }
-            }
-
-            genGauss(2, 2, 1);
-            genGauss(-2, -2, 0);
-            return points;
-        }
-
         async function inputPredictNumber() {
             const numStringX = document.getElementById('numberPredictX').value
-            const numStringY = document.getElementById('numberPredictY').value
             let numX = Number(numStringX)
+            const numStringY = document.getElementById('numberPredictY').value
             let numY = Number(numStringY)
 
             // 进行预测，把输入的数按照上面同样进行归一化
-            let output = model.predict(tf.tensor([[numX, numY]]))
+            let output = model.predict(tf.tensor([[numX, numY]])).dataSync()[0]
             // 将输出结果做反归一化处理
-            let res = output.dataSync()[0]
+            // let res = output.mul(41).add(112).dataSync()[0]
+            console.log(output, 'op');
             // 结果的四舍五入取整
-            alert(res)
+            alert(output)
         }
 
-
+        // 【入口】 页面 load 完成后执行函数
         document.addEventListener('DOMContentLoaded', buildModel);
     </script>
 </head>
 
 <body>
-    <h3>输入 x、y</h3>
-    <strong>x: </strong><input id="numberPredictX"><br>
-    <strong>y: </strong><input id="numberPredictY">
+    <h3>XoR 问题</h3>
+    <strong>X: </strong><input id="numberPredictX">
+    <strong>Y: </strong><input id="numberPredictY">
     <button onclick="inputPredictNumber()">点我</button>
 </body>
 
